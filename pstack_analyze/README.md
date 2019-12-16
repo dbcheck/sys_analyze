@@ -3,22 +3,29 @@
 1. pstack.sh is used to print stack of process
 2. pstack_analyze.perl is used to uniq or search stack from result of pstack.sh
 
-1.启动调试
+## GDB 使用介绍
+### 1. 启动调试
 
 前置条件：编译生成执行码时带上 -g，如果使用Makefile，通过给CFLAGS指定-g选项，否则调试时没有符号信息。
+
+```
 gdb program //最常用的用gdb启动程序，开始调试的方式
 gdb program core //用gdb查看core dump文件，跟踪程序core的原因
 gdb program pid //用gdb调试已经开始运行的程序，指定pid即可
 gdb attach pid //用gdb调试已经开始运行的程序，指定pid即可
+```
 
-2.调试命令
-(1)执行命令模式
--batch选项。
+### 2. 调试命令
+a. 执行命令模式, -batch选项。
 比如：打印$pid进程所有线程的堆栈并退出。
 
+```
 gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid
-1
-(2).交互模式
+```
+
+b. 交互模式
+
+```
 run //运行程序
 continue //中断后继续运行到下一个断点
 step //单步执行，进入函数
@@ -33,13 +40,19 @@ bt -N //显示最后N个栈桢
 list //显示源码
 set directory //设置gdb的工作目录
 pwd //当前的工作目录
+```
 
-(3)反复执行
+c. 反复执行
+
+```
 continue N //连续执行cointiue N次，一般用于避免频繁断点
 step N
 next N
+```
 
-3.断点
+### 3. 断点
+
+```
 break 函数名 //设置断在某个函数
 break 文件名:行号 //设置断在某一行
 info break //查看设置的断点信息
@@ -56,8 +69,11 @@ End with a line saying just “end”.
 print x
 end
 (gdb)
+```
 
-4.检测点
+### 4. 检测点
+
+```
 watch //为表达式（变量）expr设置一个观察点。一量表达式值有变化时，马上停住程序。
 rwatch //当表达式（变量）expr被读时，停住程序。
 awatch //当表达式（变量）的值被读或被写时，停住程序。
@@ -65,15 +81,19 @@ info watchpoints //列出当前所设置了的所有观察点。
 
 经验：观察某个变量是否变化，被读或者被写，由于变量只在某一个作用域，可以获取变量的地址，然后观察。
 比如：观察examined_rows变量神马时候被修改
-(1).p &examined_rows,得到地址
-(2).watch (ha_rows ) 0x7ffec8005e28,则可以观察这个变量的变化情况。
+(1). p &examined_rows,得到地址
+(2). watch (ha_rows ) 0x7ffec8005e28,则可以观察这个变量的变化情况。
+```
 
-5.查看变量
-(1)设置
+### 5. 查看变量
+(1). 设置
+
+```
 set print elements N //指定打印的长度，对长字符串特别有用。
 set print element 0 //输出完整的字符串
 set print pretty //设置GDB打印结构的时候，每行一个成员，并且有相应的缩进，缺省是关闭的
 print {type} variable
+
 比如：
 (gdb) p {ABC} 0x7fffffffe710
 $2 = {val = 1.5, val2 = 10}
@@ -87,11 +107,14 @@ info args //打印出当前函数的参数名及其值。
 display 变量 //自动打印变量
 undisplay //取消自动打印
 注意：默认编译的时候，调试过程是看不见宏的值的，编译时候需要给选项。-g3
+```
 
-6.内存查看
+### 6. 内存查看
+
+```
 格式: x /nfu x 是 examine 的缩写
-a.n表示要显示的内存单元的个数
-b.f表示显示方式, 可取如下值
+a. n表示要显示的内存单元的个数
+b. f表示显示方式, 可取如下值
 (1).x 按十六进制格式显示变量。
 (2).d 按十进制格式显示变量。
 (3).u 按十进制格式显示无符号整型。
@@ -101,7 +124,7 @@ b.f表示显示方式, 可取如下值
 (7).i 指令地址格式
 (8).c 按字符格式显示变量。
 (9).f 按浮点数格式显示变量。
-c.u表示一个地址单元的长度
+c. u表示一个地址单元的长度
 (1).b表示单字节，
 (2).h表示双字节，
 (3).w表示四字节，
@@ -109,28 +132,38 @@ c.u表示一个地址单元的长度
 
 比如：x/3xh buf
 表示从内存地址buf读取内容，3表示三个单位，x表示按十六进制显示，h表示以双字节为一个单位。
+```
 
-7.多线程调试
+### 7. 多线程调试
+
+```
 info threads //查看线程
 thread thread_no //切换到线程号
 thread apply all command //所有线程都执行命令打印栈桢
 比如：thread apply all bt //所有线程都打印栈桢
+```
 
-(1)线程锁
+(1). 线程锁
+
+```
 show scheduler-locking
 set scheduler-locking on
 set scheduler-locking off
 默认是off，当程序继续运行的时候如果有断点，那么就把所有的线程都停下来，直到你指定某个线程继续执行(thread thread_no apply continue).
 但是如果直接在当前线程执行continue的话，默认是会启动所有线程。这种模式有一种副作用，如果多个线程都断在同一个函数，这时候调试会出问题。
 这个时候需要打开线程锁，但打开线程锁，意味着其它线程不能运行了。
+```
 
-(2)non-stop模式(7.0以后的版本支持)
+(2). non-stop模式(7.0以后的版本支持)
+
+```
 set target-async 1
 set pagination off
 set non-stop on
 gdb启动了不停模式，除了断点有关的线程会被停下来，其他线程会执行。
+```
 
-8.信号量
+### 8. 信号量
 (1).singal 发送信号
 假定你的程序已将一个专用的 SIGINT（键盘输入，或CTRL-C；信号2）信号处理程序设置成采取某个清理动作，
 要想测试该信号处理程序，你可以设置一个断点并使用如下命令：
@@ -148,7 +181,7 @@ handle SIGPIPE stop print //截获SIGPIPE信号，程序停止并打印信息
 handle SIGUSR1 nostop noprint //忽略SIGUSR1信号
 handle SIG5 nostop pass
 
-9.生成环境使用GDB场景
+### 9. 生成环境使用GDB场景
 内核转储(coredump)
 (1).配置产生core文件
 前置条件：确保系统配置的core file size足够，一般设置成unlimited
