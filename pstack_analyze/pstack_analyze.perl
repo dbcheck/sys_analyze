@@ -102,6 +102,7 @@ sub searchAllStack
 {
     my ($aref_uniqStacks, $grep_or_egrep, $keyword) = @_;
     my $matchCnt = 0;
+    my $uniqMatchCnt = 0;
 
     print "========== From uniq stack search: $ARGV[1] $ARGV[2] ==========\n";
     foreach my $uniqId (sort {$a<=>$b} keys %{$aref_uniqStacks})
@@ -113,6 +114,7 @@ sub searchAllStack
                 print @{${$aref_uniqStacks}{$uniqId}};
                 my @words = split(/\@Same:/, @{${$aref_uniqStacks}{$uniqId}}[0]);
                 $matchCnt = $matchCnt + $words[1];
+                $uniqMatchCnt = $uniqMatchCnt + 1;
             }
         } else {
             if (!grep(/$keyword/, @{${$aref_uniqStacks}{$uniqId}})) {
@@ -120,10 +122,11 @@ sub searchAllStack
                 print @{${$aref_uniqStacks}{$uniqId}};
                 my @words = split(/\@Same:/, @{${$aref_uniqStacks}{$uniqId}}[0]);
                 $matchCnt = $matchCnt + $words[1];
+                $uniqMatchCnt = $uniqMatchCnt + 1;
             }
         }
     }
-    return $matchCnt;
+    return $matchCnt, $uniqMatchCnt;
 }
 
 sub usage
@@ -211,11 +214,10 @@ if (@ARGV >= 2) {
             usage($Program);
         }
     }
-    my $matchCnt = searchAllStack(\%UniqStack, $grep_or_egrep, $keyword);
-    print "\n--------------------------\n";
-    print "matched stack num: $matchCnt\n";
+    my ($matchCnt, $uniqMatch) = searchAllStack(\%UniqStack, $grep_or_egrep, $keyword);
+    print "\n----------------------------------\n";
+    print "matched stack num: $matchCnt (uniq: $uniqMatch)\n";
 } else {
-    print "\n--------------------------\n";
+    print "\n----------------------------------\n";
 }
-print "uniq    stack num: ".keys(%UniqStack)."\n";
-print "all     stack num: ".keys(%StackHash)."\n";
+print "all     stack num: " . keys(%StackHash) . " (uniq: " . keys(%UniqStack) . ")\n";
